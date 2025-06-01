@@ -1,73 +1,71 @@
-
 # 🎬 MongoDB RAG Movie Chat with Streamlit, HuggingFace, and Ollama
 
 A full-stack Retrieval-Augmented Generation (RAG) system built on top of MongoDB Atlas and LangChain. This app enables natural language queries over movie data using semantic search and a local LLM (Llama3 via Ollama).
 
-
 ## 📌 Project Overview
 
-This project encodes the movies collection from the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset (title, plot, genre, cast, etc.) into vector embeddings using a HuggingFace Transformer Model , stores them in MongoDB Atlas with vector search enabled, and enables semantic search using a local LLM (run locally via [ollama](https://ollama.com/)) and [Streamlit] app as a frontend (https://streamlit.io/).
+This project encodes the movies collection from the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset (title, plot, genre, cast, etc.) into vector embeddings using a HuggingFace Transformer Model, stores them in MongoDB Atlas with vector search enabled, and enables semantic search using a local LLM (run locally via [ollama](https://ollama.com/)) and [Streamlit](https://streamlit.io/) app as a frontend.
 
-🔍 How It Works:
+🔍 **How It Works**:
 
-1. Data Ingestion: Pulls sample movie data from MongoDB Atlas.
+1. **Data Ingestion**: Pulls sample movie data from MongoDB Atlas.  
+2. **Embedding Generation**: Converts movie metadata into dense vectors using Sentence Transformers.  
+3. **Vector Search**: Stores these embeddings in a MongoDB Atlas collection with a vector index.  
+4. **RAG Interface**: A Streamlit frontend lets users ask questions in natural language. LangChain retrieves relevant movie documents using vector search, then passes them to the LLM for answer generation.
 
-2. Embedding Generation: Converts movie metadata into dense vectors using Sentence Transformers.
+## 🛠️ Setup Instructions
 
-3. Vector Search: Stores these embeddings in a MongoDB Atlas collection with a vector index.
+## Configuration
 
-4. RAG Interface: A Streamlit frontend lets users ask questions in natural language. LangChain retrieves relevant movie documents using vector search, then passes them to the LLM for answer generation.
+The [config.py](config.py) file holds configurations for the used Ollama LLM, the HuggingFace model for embedding, as well as the index names and DB details:
 
-
-## 🛠️ Setup Instructions
-
-
-## Configuration
-
-The [config.py](config.py) file holds configurations for the used ollama llm, the hugginface model for embedding as well as the index names and db details 
-
-```
+```python
 db = "sample_mflix"
 collection = "movies"
 
-# index name created in mongo atlas 
+# Index name created in MongoDB Atlas 
 index_name = "movie_embedding_index"
-# field name in mongo docs that contain embedding vector 
+# Field name in MongoDB docs that contains embedding vector 
 vector_field_name = "movie_embedding_hf"
-# field that contains text wich was embedded 
+# Field that contains text which was embedded 
 text_field_name = "embedding_fulltext"
 
 ollama_llm = "llama3.2"
 
-# https://huggingface.co/sentence-transformers/all-mpnet-base-v2
+# https://huggingface.co/sentence-transformers/all-mpnet-base-v2
 hf_model = "sentence-transformers/all-mpnet-base-v2"
 vector_size = 768
 
-# Small fast embedding model
+# Small fast embedding model
 # hf_model = "sentence-transformers/all-MiniLM-L6-v2"
 # vector_size = 384
 ```
 
+### 1. Create and Activate Virtual Environment
 
-### 1. Create and Activate Virtual Environment
-
-```
+```bash
 uv venv
 uv pip install -r requirements.txt
 source .venv/bin/activate
 ```
-Or use ```python -m venv venv && source venv/bin/activate``` if you're not using uv.
 
-### 2. Load Sample Data in MongoDB Atlas
+Or use:
 
-Create a mongodb atlas account, log in and import the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset. The dataset already contains embedded_movies collection with embeddings for the plot field. We are going to index the movies collection from scratch with a huggingface transformers model. 
-
-
-### 3. Create Vector Search Index in MongoDB Atlas
-
-Go to your MongoDB Atlas cluster and create a Vector Search Index named movie_embedding_index on the movie_embedding_hf field:
-
+```bash
+python -m venv venv && source venv/bin/activate
 ```
+
+if you're not using `uv`.
+
+### 2. Load Sample Data in MongoDB Atlas
+
+Create a MongoDB Atlas account, log in, and import the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset. The dataset already contains an `embedded_movies` collection with embeddings for the `plot` field. You will index the `movies` collection from scratch with a HuggingFace Transformers model.
+
+### 3. Create Vector Search Index in MongoDB Atlas
+
+Go to your MongoDB Atlas cluster and create a Vector Search Index named `movie_embedding_index` on the `movie_embedding_hf` field:
+
+```json
 {
   "fields": [
     {
@@ -80,80 +78,86 @@ Go to your MongoDB Atlas cluster and create a Vector Search Index named movie_em
 }
 ```
 
-### 4. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Export your MongoDB connection string:
 
-```
+```bash
 export MONGO_CONNECTION="mongodb+srv://<username>:<password>@<cluster-url>"
 ```
 
-### 🧠 Run Embedding Script
+### 🧠 Run Embedding Script
+
 This script encodes metadata fields into vector embeddings and stores them in your MongoDB Atlas collection.
 
-```
+```bash
 python encode_movie_collection.py
 ```
 
-### ✅ Verifying Vectorized Documents
+### ✅ Verifying Vectorized Documents
 
 To check which documents have already been embedded, use this MongoDB query:
 
-```
-{ movie_embedding_hf: { $exists: true } }
+```json
+{ "movie_embedding_hf": { "$exists": true } }
 ```
 
-### 🤖 Start the LLM Backend (Ollama)
+### 🤖 Start the LLM Backend (Ollama)
 
 Make sure Ollama is installed and run your local LLM (e.g., LLaMA 3):
 
-```
+```bash
 ollama run llama3.2
 ```
 
-### 🚀 Launch the Streamlit Application
-```
+### 🚀 Launch the Streamlit Application
+
+```bash
 streamlit run main.py
 ```
 
 This opens a web app where you can enter natural language queries and see relevant movie data retrieved and answered by the LLM.
 
+## 🧪 Example Queries
 
-## 🧪 Example Queries
+### Thematic or Genre-Based
 
-### Thematic or Genre-Based
 - "Find action-packed movies involving espionage or spies."
 - "What are some heartwarming family dramas?"
 - "List sci-fi movies that explore artificial intelligence."
 - "Give me psychological thrillers from the 2000s."
 - "Find romantic comedies set in New York."
 
-### Cast/Director-Based
+### Cast/Director-Based
+
 - "Movies where Tom Hanks played a lead role."
 - "Show films directed by Christopher Nolan that involve time travel."
 - "What are some ensemble cast movies with Morgan Freeman?"
 
-### Temporal Queries
+### Temporal Queries
+
 - "What are some top-rated movies from the 90s?"
 - "List recent horror films released after 2015."
 
-### Awards/Critical Reception
+### Awards/Critical Reception
+
 - "Which movies won Oscars for Best Picture?"
 - "Find critically acclaimed indie films."
 - "What are some underrated movies with high ratings but low popularity?"
 
-### Language or Country Specific
+### Language or Country Specific
+
 - "Foreign language thrillers from South Korea."
 - "French romantic films from the 2010s."
 
-### Plot/Content Based
+### Plot/Content Based
+
 - "Movies about survival in the wilderness."
 - "Films that explore themes of identity and memory."
 - "Movies based on true crime stories."
 - "What are some movies where the protagonist is a robot or AI?"
 - "Films where the ending is open to interpretation."
 
+## 📚 Resources
 
-# Resources
-
-* https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/
+- https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/
