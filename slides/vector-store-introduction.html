@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Vector Database with MongoDB Atlas</title>
+
+    <meta name="description" content="MongoDB Introduction - CDS NoSQL">
+    <meta name="author" content="Norman Süsstrunk">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="reveal/dist/reset.css">
+    <link rel="stylesheet" href="reveal/custom.css">
+    <link rel="stylesheet" href="reveal/dist/reveal.css">
+    <link rel="stylesheet" href="reveal/dist/theme/black.css" id="theme">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="reveal/plugin/highlight/monokai.css">
+</head>
+
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+  <h2>Advanced Word Embeddings & Semantic Search</h2>
+  <p>In-depth guide using Hugging Face Transformers and MongoDB Vector Store</p>
+
+  <img src="Hero_-_5_4_(3).svg"/>
+</section>
+
+<section>
+  <h3>What Are Word Embeddings?</h3>
+  <ul>
+    <li>Dense vector representations of text</li>
+    <li>Preserve semantic similarity: "king - man + woman ≈ queen"</li>
+    <li>Contextual embeddings (e.g., BERT) outperform static ones (e.g., Word2Vec)</li>
+  </ul>
+</section>
+
+<section>
+  <img src="Large language models and embedding 4.jpeg" />
+  <p><a href="https://www.danieldemmel.me/blog/understanding-embeddings-and-how-to-use-them-for-semantic-search">source</a></p>
+</section>
+
+<section>
+    <img src="Large language models and embedding 6.jpeg"/>
+    <p><a href="https://www.danieldemmel.me/blog/understanding-embeddings-and-how-to-use-them-for-semantic-search">source</a></p>
+</section>
+
+<section>
+
+  <h2>Hugging Face Sentence Transformers </h2>
+  <a href="https://huggingface.co/sentence-transformers/all-mpnet-base-v2">all-mpnet-base-v2</a>
+
+  <p>
+"Our model is intented to be used as a sentence and short paragraph encoder. 
+Given an input text, it <strong>ouptuts a vector which captures the semantic information</strong>. 
+The sentence vector may be used for information retrieval, clustering or sentence similarity tasks.
+By default, input text longer than 384 word pieces is truncated."
+  </o>
+
+</section>
+
+
+
+<section>
+  <h3>Using Sentence Transformers (Simpler)</h3>
+  <p>Example: Getting contextual embeddings with 🤗 Transformers</p>
+  <pre><code class="language-python">
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+sentences = ["Semantic search is powerful", "Vector search with MongoDB"]
+embeddings = model.encode(sentences)
+  </code></pre>
+</section>
+
+<section>
+  <h3>Similarity Computation</h3>
+  <p>Using cosine similarity for semantic comparison</p>
+  <pre><code class="language-python">
+from torch.nn.functional import cosine_similarity
+query = model.encode("Search engine using AI", convert_to_tensor=True)
+similarities = cosine_similarity(query, embeddings)
+print(similarities)
+  </code></pre>
+</section>
+
+<section>
+  <h2>Semantic Search Architecture</h2>
+  <ul>
+    <li>Step 1: Embed all documents and store them</li>
+    <li>Step 2: Embed query at runtime</li>
+    <li>Step 3: Use nearest-neighbor search to retrieve top results</li>
+  </ul>
+</section>
+
+<section>
+  <h2>What is RAG?</h2>
+  <p><strong>Retrieval-Augmented Generation (RAG)</strong> is an approach that combines <em>retrieval-based</em> and <em>generation-based</em> models.</p>
+  <ul>
+    <li>Uses a knowledge retriever to fetch relevant documents from a large corpus.</li>
+    <li>Feeds those documents into a language model to generate context-aware responses.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Why Use RAG?</h2>
+  <ul>
+    <li>Overcomes the limitations of fixed knowledge in language models.</li>
+    <li>Provides up-to-date and domain-specific information.</li>
+    <li>Improves factual accuracy and reduces hallucination.</li>
+    <li>Enables smaller models to perform better with external knowledge.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>How RAG Works</h2>
+  <ol>
+    <li><strong>Query Encoding:</strong> User input is encoded into a dense vector. (Embeddings!)</li>
+    <li><strong>Document Retrieval:</strong> Vector used to fetch relevant documents via similarity search.</li>
+    <li><strong>Generation:</strong> Retrieved content passed to a generative model to produce the final answer.</li>
+  </ol>
+  <p>RAG = <code>Retrieve</code> + <code>Read</code> + <code>Generate</code></p>
+</section>
+
+
+<section>
+  Architecture Overview
+
+  <p style="background-color: white;">
+  <img src="rag-flowchart.svg"/>
+  </p>
+  <a href="https://www.mongodb.com/docs/atlas/atlas-vector-search/rag/">source</a>
+</section>
+
+<section>
+  <h3>Vector Store with MongoDB</h3>
+  <ul>
+    <li>MongoDB Atlas supports native vector search</li>
+    <li>Efficient indexing + metadata filtering</li>
+    <li>Scales to millions of vectors</li>
+  </ul>
+
+  <a href="https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/"> MongoDB Vector Search Overview </a>
+
+  <img src="https://images.contentstack.io/v3/assets/blt7151619cb9560896/blt8f226c993594ca5b/672280cd8c3f9557c84ad795/Hero_-_5_4_(3).svg"/>
+</section>
+
+<section>
+  <h3>Storing Vectors in MongoDB</h3>
+  <p>Example schema:</p>
+  <pre><code class="language-json">
+{
+  "text": "Semantic search is powerful",
+  "embedding": [0.12, -0.08, ..., 0.21],
+  "metadata": {
+    "source": "HuggingFace",
+    "tags": ["NLP", "semantic"]
+  }
+}
+  </code></pre>
+</section>
+
+<section>
+  <h3>Vector Index Creation (MongoDB)</h3>
+  <pre><code class="language-json">
+{
+  "fields": [
+    {
+      "path": "movie_embedding_hf",
+      "type": "vector",
+      "numDimensions": 768,
+      "similarity": "cosine"
+    }
+  ]
+}
+  </code></pre>
+  <p>Create via Atlas UI or MongoDB Atlas CLI</p>
+</section>
+
+<section>
+  <h2>Full Semantic Search Pipeline</h2>
+  <ol>
+    <li>Use Hugging Face Transformers to encode text</li>
+    <li>Store embeddings + metadata in MongoDB Atlas</li>
+    <li>create vector index in Atlas</li>
+    <li>Use Langchain library (<a href="https://python.langchain.com/docs/integrations/vectorstores/mongodb_atlas/" target="_blank">MongoDBAtlasVectorSearch</a>) for semantic retrieval</li>
+  </ol>
+</section>
+
+<section data-background="#0e1117" data-transition="fade">
+  <h1>🎬 Build a MongoDB-Powered Movie Chatbot</h1>
+  <h3>with Vector Search and LLMs</h3>
+</section>
+
+<section>
+  <h2>📝 Objective</h2>
+  <ul>
+    <li>MongoDB Atlas</li>
+    <li>HuggingFace Transformers</li>
+    <li>LangChain</li>
+    <li>Ollama (local LLM)</li>
+    <li>Streamlit UI</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🎯 Learning Goals</h2>
+  <ul>
+    <li>Generate and store document embeddings</li>
+    <li>Configure MongoDB Atlas vector search</li>
+    <li>Build RAG pipeline with LangChain</li>
+    <li>Run local LLM via Ollama</li>
+    <li>Create a user interface with Streamlit</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🧩 Part 1: Setup & Dataset</h2>
+  <p><strong>Steps:</strong></p>
+  <ol>
+    <li>Clone the project (<a href="https://github.com/normansuesstrunk/mongo-rag">https://github.com/normansuesstrunk/mongo-rag</a></li>
+    <li>Install dependencies</li>
+    <li>Load <code>sample_mflix.movies</code> in MongoDB Atlas</li>
+  </ol>
+  <p>✅ <em>Deliverable:</em> Verify the dataset exists in the collection</p>
+</section>
+
+<section>
+  <h2>🧠 Part 2: Embedding Movie Metadata</h2>
+  <ul>
+    <li>Set up <code>MONGO_CONNECTION</code> in .env</li>
+    <li>Use HuggingFace model to embed fields: <code>title</code>, <code>plot</code>, <code>cast</code>, etc.</li>
+    <li>Store in MongoDB as <code>movie_embedding_hf</code></li>
+  </ul>
+  <p>✅ <em>Deliverable:</em></p>
+  <pre><code>{ movie_embedding_hf: { $exists: true } }</code></pre>
+</section>
+
+<section>
+  <h2>🗂️ Part 3: Create a Vector Index</h2>
+  <ul>
+    <li>Go to Atlas &gt; Search Indexes</li>
+    <li>Create index on <code>movie_embedding_hf</code></li>
+    <li>Use:
+      <ul>
+        <li><code>type: "vector"</code></li>
+        <li><code>numDimensions: 768</code></li>
+        <li><code>similarity: "cosine"</code></li>
+      </ul>
+    </li>
+  </ul>
+  <p>✅ <em>Deliverable:</em> Show working vector index</p>
+</section>
+
+<section>
+  <h2>🖥️ Part 4: Streamlit RAG Interface</h2>
+  <ul>
+    <li>Use LangChain's <code>MongoDBAtlasVectorSearch</code></li>
+    <li>Connect to LLM via <code>OllamaLLM</code></li>
+    <li>Build interface with Streamlit</li>
+  </ul>
+  <p><strong>App flow:</strong></p>
+  <ol>
+    <li>User enters a question</li>
+    <li>Retrieve relevant documents</li>
+    <li>Query LLM for an answer</li>
+  </ol>
+  <p>✅ <em>Deliverable:</em> Working Streamlit app</p>
+</section>
+
+<section>
+  <h2>💡 Example Queries</h2>
+  <ul>
+    <li>“List movies about time travel.”</li>
+    <li>“Show family-friendly movies directed by Spielberg.”</li>
+    <li>“Which films involve AI or robots?”</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🧠 Challenge 1: Hybrid Search</h2>
+  <ul>
+    <li>Combine vector similarity with keyword filters (e.g., genres, year)</li>
+    <li>Use MongoDB Atlas `$search` with compound clauses</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🧠 Challenge 2: Conversational Memory</h2>
+  <ul>
+    <li>Retain chat history and previous queries</li>
+    <li>Use LangChain’s memory objects like `ConversationBufferMemory`</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🧠 Challenge 3: Custom Prompt Engineering</h2>
+  <ul>
+    <li>Create your own prompt templates for different user intents</li>
+    <li>Use LangChain’s `PromptTemplate` with structured formatting</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🧠 Challenge 4: Mongo Query Generation with LLM</h2>
+  <ul>
+    <li>Use the LLM to convert user intent into raw MongoDB queries</li>
+    <li>Provide the schema and examples to guide generation</li>
+    <li>Display or execute the query in a safe sandbox mode</li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>📝 Submission</h2>
+  <ul>
+    <li>Demo video or screenshots</li>
+    <li>1-page reflection</li>
+  </ul>
+</section>
+
+<section>
+  <h2>📦 Key Concepts</h2>
+  <ul>
+    <li>Semantic search with vector embeddings</li>
+    <li>MongoDB Atlas vector index</li>
+    <li>Local LLM with Ollama</li>
+    <li>LangChain retrieval pipeline</li>
+    <li>Full-stack AI interface</li>
+  </ul>
+</section> 
+
+    </div>
+</div>
+
+<script src="reveal/dist/reveal.js"></script>
+<script src="reveal/plugin/zoom/zoom.js"></script>
+<script src="reveal/plugin/notes/notes.js"></script>
+<script src="reveal/plugin/search/search.js"></script>
+<script src="reveal/plugin/markdown/markdown.js"></script>
+<script src="reveal/plugin/highlight/highlight.js"></script>
+<script>
+
+    // Also available as an ES module, see:
+    // https://revealjs.com/initialization/
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealZoom, RevealNotes, RevealSearch, RevealMarkdown, RevealHighlight]
+    });
+
+
+    Reveal.configure({ pdfSeparateFragments: false });
+
+
+</script>
+</body>
+</html>
