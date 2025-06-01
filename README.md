@@ -60,7 +60,7 @@ Or use ```python -m venv venv && source venv/bin/activate``` if you're not using
 
 ### 2. Load Sample Data in MongoDB Atlas
 
-Create a mongodb atlas account, log in and import the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset. The dataset already contains embedded_movies collection with embeddings for the plot field. This was embedded by 
+Create a mongodb atlas account, log in and import the [sample-mflix](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/) dataset. The dataset already contains embedded_movies collection with embeddings for the plot field. We are going to index the movies collection from scratch with a huggingface transformers model. 
 
 
 ### 3. Create Vector Search Index in MongoDB Atlas
