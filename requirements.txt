@@ -1,0 +1,13 @@
+langchain
+pymongo
+streamlit
+sentence_transformers
+langchain-ollama
+langchain-mongodb
+langchain-huggingface
+langchain-community
+tqdm
+matplotlib 
+scikit-learn 
+seaborn
+notebook
